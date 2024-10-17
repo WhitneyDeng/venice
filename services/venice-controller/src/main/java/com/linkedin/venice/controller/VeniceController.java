@@ -16,6 +16,8 @@ import com.linkedin.venice.controller.supersetschema.SupersetSchemaGenerator;
 import com.linkedin.venice.controller.systemstore.SystemStoreRepairService;
 import com.linkedin.venice.d2.D2ClientFactory;
 import com.linkedin.venice.exceptions.VeniceException;
+import com.linkedin.venice.grpc.VeniceGrpcServer;
+import com.linkedin.venice.grpc.VeniceGrpcServerConfig;
 import com.linkedin.venice.pubsub.PubSubClientsFactory;
 import com.linkedin.venice.pubsub.PubSubTopicRepository;
 import com.linkedin.venice.serialization.avro.AvroProtocolDefinition;
@@ -32,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,6 +49,7 @@ public class VeniceController {
   private VeniceControllerService controllerService;
   private AdminSparkServer adminServer;
   private AdminSparkServer secureAdminServer;
+  private VeniceGrpcServer adminGrpcServer;
   private TopicCleanupService topicCleanupService;
   private Optional<StoreBackupVersionCleanupService> storeBackupVersionCleanupService;
 
@@ -150,6 +154,19 @@ public class VeniceController {
         pubSubTopicRepository,
         pubSubClientsFactory);
 
+    VeniceControllerRequestHandlerDependencies.Builder controllerRequestHandlerDependenciesBuilder =
+        new VeniceControllerRequestHandlerDependencies.Builder().setAdmin(controllerService.getVeniceHelixAdmin())
+            .setMetricsRepository(metricsRepository)
+            .setClusters(multiClusterConfigs.getClusters())
+            .setDisabledRoutes(multiClusterConfigs.getDisabledRoutes())
+            .setVeniceProperties(multiClusterConfigs.getCommonConfig().getJettyConfigOverrides())
+            .setDisableParentRequestTopicForStreamPushes(
+                multiClusterConfigs.getCommonConfig().isDisableParentRequestTopicForStreamPushes())
+            .setPubSubTopicRepository(pubSubTopicRepository);
+
+    VeniceControllerRequestHandler requestHandler =
+        new VeniceControllerRequestHandler(controllerRequestHandlerDependenciesBuilder.build());
+
     adminServer = new AdminSparkServer(
         // no need to pass the hostname, we are binding to all the addresses
         multiClusterConfigs.getAdminPort(),
@@ -164,11 +181,13 @@ public class VeniceController {
         multiClusterConfigs.getCommonConfig().getJettyConfigOverrides(),
         // TODO: Builder pattern or just pass the config object here?
         multiClusterConfigs.getCommonConfig().isDisableParentRequestTopicForStreamPushes(),
-        pubSubTopicRepository);
+        pubSubTopicRepository,
+        requestHandler);
     if (sslEnabled) {
       /**
        * SSL enabled AdminSparkServer uses a different port number than the regular service.
        */
+      requestHandler = new VeniceControllerRequestHandler(controllerRequestHandlerDependenciesBuilder.build());
       secureAdminServer = new AdminSparkServer(
           multiClusterConfigs.getAdminSecurePort(),
           controllerService.getVeniceHelixAdmin(),
@@ -181,7 +200,8 @@ public class VeniceController {
           multiClusterConfigs.getDisabledRoutes(),
           multiClusterConfigs.getCommonConfig().getJettyConfigOverrides(),
           multiClusterConfigs.getCommonConfig().isDisableParentRequestTopicForStreamPushes(),
-          pubSubTopicRepository);
+          pubSubTopicRepository,
+          requestHandler);
     }
     storeBackupVersionCleanupService = Optional.empty();
     storeGraveyardCleanupService = Optional.empty();
@@ -231,6 +251,31 @@ public class VeniceController {
     }
     // Run before enabling controller in helix so leadership won't hand back to this controller during schema requests.
     initializeSystemSchema(controllerService.getVeniceHelixAdmin());
+
+    VeniceControllerRequestHandlerDependencies controllerRequestHandlerDependencies =
+        new VeniceControllerRequestHandlerDependencies.Builder().setAdmin(admin)
+            .setAccessController(accessController.orElse(null))
+            .setMetricsRepository(metricsRepository)
+            .setVeniceProperties(multiClusterConfigs.getCommonConfig().getJettyConfigOverrides())
+            .setDisabledRoutes(multiClusterConfigs.getDisabledRoutes())
+            .setEnforceSSL(multiClusterConfigs.isControllerEnforceSSLOnly())
+            .setSslEnabled(false) // TODO: for sslEnabled gRPC server set to true
+            .setCheckReadMethodForKafka(multiClusterConfigs.adminCheckReadMethodForKafka())
+            .setPubSubTopicRepository(pubSubTopicRepository)
+            .build();
+
+    VeniceControllerRequestHandler grpcRequestHandler =
+        new VeniceControllerRequestHandler(controllerRequestHandlerDependencies);
+    VeniceControllerGrpcServiceImpl service = new VeniceControllerGrpcServiceImpl(grpcRequestHandler);
+
+    // TODO: Use separate thread pool for request handling; add SSL support
+    VeniceGrpcServerConfig.Builder grpcServerBuilder =
+        new VeniceGrpcServerConfig.Builder().setPort(multiClusterConfigs.getAdminGrpcPort())
+            .setService(service)
+            // .setInterceptors(interceptors)
+            .setExecutor(Executors.newCachedThreadPool());
+    // sslFactory.ifPresent(grpcServerBuilder::setSslFactory);
+    adminGrpcServer = new VeniceGrpcServer(grpcServerBuilder.build());
   }
 
   /**
@@ -255,6 +300,7 @@ public class VeniceController {
     disabledPartitionEnablerService.ifPresent(AbstractVeniceService::start);
     // register with service discovery at the end
     asyncRetryingServiceDiscoveryAnnouncer.register();
+    adminGrpcServer.start();
     LOGGER.info("Controller is started.");
   }
 
@@ -311,6 +357,7 @@ public class VeniceController {
     unusedValueSchemaCleanupService.ifPresent(Utils::closeQuietlyWithErrorLogged);
     storeBackupVersionCleanupService.ifPresent(Utils::closeQuietlyWithErrorLogged);
     disabledPartitionEnablerService.ifPresent(Utils::closeQuietlyWithErrorLogged);
+    adminGrpcServer.stop();
     Utils.closeQuietlyWithErrorLogged(topicCleanupService);
     Utils.closeQuietlyWithErrorLogged(secureAdminServer);
     Utils.closeQuietlyWithErrorLogged(adminServer);

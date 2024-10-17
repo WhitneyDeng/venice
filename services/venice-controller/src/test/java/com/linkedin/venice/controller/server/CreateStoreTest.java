@@ -15,10 +15,14 @@ import static org.mockito.Mockito.verify;
 
 import com.linkedin.venice.HttpConstants;
 import com.linkedin.venice.controller.Admin;
+import com.linkedin.venice.controller.VeniceControllerRequestHandler;
+import com.linkedin.venice.controller.VeniceControllerRequestHandlerDependencies;
+import com.linkedin.venice.controller.VeniceParentHelixAdmin;
 import com.linkedin.venice.utils.Utils;
 import java.util.HashMap;
 import java.util.Optional;
 import org.apache.commons.httpclient.HttpStatus;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import spark.QueryParamsMap;
 import spark.Request;
@@ -28,6 +32,17 @@ import spark.Route;
 
 public class CreateStoreTest {
   private static String clusterName = Utils.getUniqueString("test-cluster");
+
+  private VeniceControllerRequestHandler requestHandler;
+  private Admin mockAdmin;
+
+  @BeforeMethod
+  public void setUp() {
+    mockAdmin = mock(VeniceParentHelixAdmin.class);
+    VeniceControllerRequestHandlerDependencies dependencies = mock(VeniceControllerRequestHandlerDependencies.class);
+    doReturn(mockAdmin).when(dependencies).getAdmin();
+    requestHandler = new VeniceControllerRequestHandler(dependencies);
+  }
 
   @Test
   public void testCreateStoreWhenThrowsNPEInternally() throws Exception {
@@ -53,7 +68,7 @@ public class CreateStoreTest {
     doReturn("\"long\"").when(request).queryParams(KEY_SCHEMA);
     doReturn("\"string\"").when(request).queryParams(VALUE_SCHEMA);
 
-    CreateStore createStoreRoute = new CreateStore(false, Optional.empty());
+    CreateStore createStoreRoute = new CreateStore(false, Optional.empty(), requestHandler);
     Route createStoreRouter = createStoreRoute.createStore(admin);
     createStoreRouter.handle(request, response);
     verify(response).status(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -82,7 +97,7 @@ public class CreateStoreTest {
     doReturn("\"long\"").when(request).queryParams(KEY_SCHEMA);
     doReturn("\"string\"").when(request).queryParams(VALUE_SCHEMA);
 
-    CreateStore createStoreRoute = new CreateStore(false, Optional.empty());
+    CreateStore createStoreRoute = new CreateStore(false, Optional.empty(), requestHandler);
     Route createStoreRouter = createStoreRoute.createStore(admin);
     createStoreRouter.handle(request, response);
   }
@@ -102,7 +117,7 @@ public class CreateStoreTest {
 
     doReturn(clusterName).when(request).queryParams(CLUSTER);
 
-    CreateStore createStoreRoute = new CreateStore(false, Optional.empty());
+    CreateStore createStoreRoute = new CreateStore(false, Optional.empty(), requestHandler);
     Route createStoreRouter = createStoreRoute.createStore(admin);
     createStoreRouter.handle(request, response);
     verify(response).status(HttpStatus.SC_BAD_REQUEST);
@@ -127,7 +142,7 @@ public class CreateStoreTest {
     doReturn("\"long\"").when(request).queryParams(KEY_SCHEMA);
     doReturn("\"string\"").when(request).queryParams(VALUE_SCHEMA);
 
-    CreateStore createStoreRoute = new CreateStore(false, Optional.empty());
+    CreateStore createStoreRoute = new CreateStore(false, Optional.empty(), requestHandler);
     Route createStoreRouter = createStoreRoute.createStore(admin);
     createStoreRouter.handle(request, response);
     verify(response).status(HttpConstants.SC_MISDIRECTED_REQUEST);

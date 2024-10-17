@@ -15,9 +15,10 @@ public class ConfigKeys {
   public static final String ZOOKEEPER_ADDRESS = "zookeeper.address";
 
   public static final String ADMIN_PORT = "admin.port";
-  public static final String ADMIN_HOSTNAME = "admin.hostname";
-
   public static final String ADMIN_SECURE_PORT = "admin.secure.port";
+  public static final String ADMIN_GRPC_PORT = "admin.grpc.port";
+  public static final String ADMIN_SECURE_GRPC_PORT = "admin.secure.grpc.port";
+  public static final String ADMIN_HOSTNAME = "admin.hostname";
 
   /**
    * Whether controller should check "Read" method against Kafka wildcard ACL while users request

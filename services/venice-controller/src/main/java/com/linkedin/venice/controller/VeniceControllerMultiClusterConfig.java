@@ -55,6 +55,14 @@ public class VeniceControllerMultiClusterConfig {
     return getCommonConfig().getAdminSecurePort();
   }
 
+  public int getAdminGrpcPort() {
+    return getCommonConfig().getAdminGrpcPort();
+  }
+
+  public int getAdminSecureGrpcPort() {
+    return getCommonConfig().getAdminSecureGrpcPort();
+  }
+
   public boolean adminCheckReadMethodForKafka() {
     return getCommonConfig().adminCheckReadMethodForKafka();
   }

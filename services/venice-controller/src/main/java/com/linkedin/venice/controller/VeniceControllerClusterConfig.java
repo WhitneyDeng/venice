@@ -7,9 +7,11 @@ import static com.linkedin.venice.ConfigKeys.ACTIVE_ACTIVE_REAL_TIME_SOURCE_FABR
 import static com.linkedin.venice.ConfigKeys.ADMIN_CHECK_READ_METHOD_FOR_KAFKA;
 import static com.linkedin.venice.ConfigKeys.ADMIN_CONSUMPTION_CYCLE_TIMEOUT_MS;
 import static com.linkedin.venice.ConfigKeys.ADMIN_CONSUMPTION_MAX_WORKER_THREAD_POOL_SIZE;
+import static com.linkedin.venice.ConfigKeys.ADMIN_GRPC_PORT;
 import static com.linkedin.venice.ConfigKeys.ADMIN_HELIX_MESSAGING_CHANNEL_ENABLED;
 import static com.linkedin.venice.ConfigKeys.ADMIN_HOSTNAME;
 import static com.linkedin.venice.ConfigKeys.ADMIN_PORT;
+import static com.linkedin.venice.ConfigKeys.ADMIN_SECURE_GRPC_PORT;
 import static com.linkedin.venice.ConfigKeys.ADMIN_SECURE_PORT;
 import static com.linkedin.venice.ConfigKeys.ADMIN_TOPIC_REPLICATION_FACTOR;
 import static com.linkedin.venice.ConfigKeys.ADMIN_TOPIC_SOURCE_REGION;
@@ -231,6 +233,8 @@ public class VeniceControllerClusterConfig {
   private final String adminHostname;
   private final int adminPort;
   private final int adminSecurePort;
+  private final int adminGrpcPort;
+  private final int adminSecureGrpcPort;
   private final int controllerClusterReplica;
   // Name of the Helix cluster for controllers
   private final String controllerClusterName;
@@ -659,6 +663,9 @@ public class VeniceControllerClusterConfig {
     this.adminPort = props.getInt(ADMIN_PORT);
     this.adminHostname = props.getString(ADMIN_HOSTNAME, Utils::getHostName);
     this.adminSecurePort = props.getInt(ADMIN_SECURE_PORT);
+    this.adminGrpcPort = props.getInt(ADMIN_GRPC_PORT);
+    this.adminSecureGrpcPort = props.getInt(ADMIN_SECURE_GRPC_PORT);
+
     /**
      * Override the config to false if the "Read" method check is not working as expected.
      */
@@ -1214,6 +1221,14 @@ public class VeniceControllerClusterConfig {
 
   public int getAdminSecurePort() {
     return adminSecurePort;
+  }
+
+  public int getAdminGrpcPort() {
+    return adminGrpcPort;
+  }
+
+  public int getAdminSecureGrpcPort() {
+    return adminSecureGrpcPort;
   }
 
   public boolean adminCheckReadMethodForKafka() {
