@@ -68,45 +68,13 @@ public class JobRoutes extends AbstractRoute {
         jobStatusRequest.setTargetedRegions(request.queryParams(TARGETED_REGIONS));
         jobStatusRequest.setRegion(AdminSparkServer.getOptionalParameterValue(request, FABRIC));
 
-        populateJobStatus(jobStatusRequest, admin, responseObject);
+        requestHandler.queryJobStatus(jobStatusRequest, responseObject);
       } catch (Throwable e) {
         responseObject.setError(e);
         AdminSparkServer.handleError(e, request, response);
       }
       return AdminSparkServer.OBJECT_MAPPER.writeValueAsString(responseObject);
     };
-  }
-
-  public JobStatusQueryResponse populateJobStatus(
-      JobStatusRequest jobStatusRequest,
-      Admin admin,
-      JobStatusQueryResponse responseObject) {
-    String store = jobStatusRequest.getStore();
-    int versionNumber = jobStatusRequest.getVersionNumber();
-    String cluster = jobStatusRequest.getCluster();
-    String incrementalPushVersion = jobStatusRequest.getIncrementalPushVersion();
-    String region = jobStatusRequest.getRegion();
-    String targetedRegions = jobStatusRequest.getTargetedRegions();
-
-    String kafkaTopicName = Version.composeKafkaTopic(store, versionNumber);
-    Admin.OfflinePushStatusInfo offlineJobStatus = admin.getOffLinePushStatus(
-        cluster,
-        kafkaTopicName,
-        Optional.ofNullable(incrementalPushVersion),
-        region,
-        targetedRegions);
-    responseObject.setStatus(offlineJobStatus.getExecutionStatus().toString());
-    responseObject.setStatusUpdateTimestamp(offlineJobStatus.getStatusUpdateTimestamp());
-    responseObject.setStatusDetails(offlineJobStatus.getStatusDetails());
-    responseObject.setExtraInfo(offlineJobStatus.getExtraInfo());
-    responseObject.setExtraInfoUpdateTimestamp(offlineJobStatus.getExtraInfoUpdateTimestamp());
-    responseObject.setExtraDetails(offlineJobStatus.getExtraDetails());
-    responseObject.setUncompletedPartitions(offlineJobStatus.getUncompletedPartitions());
-
-    responseObject.setCluster(cluster);
-    responseObject.setName(store);
-    responseObject.setVersion(versionNumber);
-    return responseObject;
   }
 
   /**

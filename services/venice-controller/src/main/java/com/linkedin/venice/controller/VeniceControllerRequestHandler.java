@@ -1,8 +1,11 @@
 package com.linkedin.venice.controller;
 
+import com.linkedin.venice.controller.server.endpoints.JobStatusRequest;
+import com.linkedin.venice.controllerapi.JobStatusQueryResponse;
 import com.linkedin.venice.controllerapi.LeaderControllerResponse;
 import com.linkedin.venice.controllerapi.request.NewStoreRequest;
 import com.linkedin.venice.meta.Instance;
+import com.linkedin.venice.meta.Version;
 import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,6 +49,34 @@ public class VeniceControllerRequestHandler {
         request.isSystemStore(),
         Optional.ofNullable(request.getAccessPermissions()));
     LOGGER.info("Store: {} created successfully in cluster: {}", request.getStoreName(), request.getClusterName());
+  }
+
+  public void queryJobStatus(JobStatusRequest jobStatusRequest, JobStatusQueryResponse responseObject) {
+    String store = jobStatusRequest.getStore();
+    int versionNumber = jobStatusRequest.getVersionNumber();
+    String cluster = jobStatusRequest.getCluster();
+    String incrementalPushVersion = jobStatusRequest.getIncrementalPushVersion();
+    String region = jobStatusRequest.getRegion();
+    String targetedRegions = jobStatusRequest.getTargetedRegions();
+
+    String kafkaTopicName = Version.composeKafkaTopic(store, versionNumber);
+    Admin.OfflinePushStatusInfo offlineJobStatus = admin.getOffLinePushStatus(
+        cluster,
+        kafkaTopicName,
+        Optional.ofNullable(incrementalPushVersion),
+        region,
+        targetedRegions);
+    responseObject.setStatus(offlineJobStatus.getExecutionStatus().toString());
+    responseObject.setStatusUpdateTimestamp(offlineJobStatus.getStatusUpdateTimestamp());
+    responseObject.setStatusDetails(offlineJobStatus.getStatusDetails());
+    responseObject.setExtraInfo(offlineJobStatus.getExtraInfo());
+    responseObject.setExtraInfoUpdateTimestamp(offlineJobStatus.getExtraInfoUpdateTimestamp());
+    responseObject.setExtraDetails(offlineJobStatus.getExtraDetails());
+    responseObject.setUncompletedPartitions(offlineJobStatus.getUncompletedPartitions());
+
+    responseObject.setCluster(cluster);
+    responseObject.setName(store);
+    responseObject.setVersion(versionNumber);
   }
 
   public void getLeaderController(String clusterName, LeaderControllerResponse response) {
