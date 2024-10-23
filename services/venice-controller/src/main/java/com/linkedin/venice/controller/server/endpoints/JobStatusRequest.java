@@ -2,12 +2,13 @@ package com.linkedin.venice.controller.server.endpoints;
 
 import static com.linkedin.venice.controllerapi.ControllerApiConstants.*;
 
+import com.linkedin.venice.controllerapi.request.ControllerRequest;
 import com.linkedin.venice.utils.Utils;
 
 
-public class JobStatusRequest {
-  private String cluster;
-  private String store;
+public class JobStatusRequest extends ControllerRequest {
+  // TODO: extend ControllerRequest (refer to NewStoreRequest)
+  private String storeName;
   private int versionNumber;
   private String incrementalPushVersion;
   private String targetedRegions;
@@ -16,20 +17,27 @@ public class JobStatusRequest {
   public JobStatusRequest() {
   }
 
-  public void setCluster(String cluster) {
-    this.cluster = cluster;
+  public JobStatusRequest(
+      String clusterName,
+      String storeName,
+      int versionNumber,
+      String incrementalPushVersion,
+      String targetedRegions,
+      String region) {
+    super(clusterName);
+    this.storeName = storeName;
+    this.versionNumber = versionNumber;
+    this.incrementalPushVersion = incrementalPushVersion;
+    this.targetedRegions = targetedRegions;
+    this.region = region;
   }
 
-  public String getCluster() {
-    return cluster;
+  public void setStoreName(String store) {
+    this.storeName = store;
   }
 
-  public void setStore(String store) {
-    this.store = store;
-  }
-
-  public String getStore() {
-    return store;
+  public String getStoreName() {
+    return storeName;
   }
 
   public void setVersionNumber(String versionNumber) {

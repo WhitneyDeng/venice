@@ -52,9 +52,9 @@ public class VeniceControllerRequestHandler {
   }
 
   public void queryJobStatus(JobStatusRequest jobStatusRequest, JobStatusQueryResponse responseObject) {
-    String store = jobStatusRequest.getStore();
+    String store = jobStatusRequest.getStoreName();
     int versionNumber = jobStatusRequest.getVersionNumber();
-    String cluster = jobStatusRequest.getCluster();
+    String cluster = jobStatusRequest.getClusterName();
     String incrementalPushVersion = jobStatusRequest.getIncrementalPushVersion();
     String region = jobStatusRequest.getRegion();
     String targetedRegions = jobStatusRequest.getTargetedRegions();

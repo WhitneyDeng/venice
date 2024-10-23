@@ -60,8 +60,8 @@ public class JobRoutes extends AbstractRoute {
         AdminSparkServer.validateParams(request, JOB.getParams(), admin);
 
         JobStatusRequest jobStatusRequest = new JobStatusRequest();
-        jobStatusRequest.setCluster(request.queryParams(CLUSTER));
-        jobStatusRequest.setStore(request.queryParams(NAME));
+        jobStatusRequest.setClusterName(request.queryParams(CLUSTER));
+        jobStatusRequest.setStoreName(request.queryParams(NAME));
         jobStatusRequest.setVersionNumber(Utils.parseIntFromString(request.queryParams(VERSION), VERSION));
         jobStatusRequest
             .setIncrementalPushVersion(AdminSparkServer.getOptionalParameterValue(request, INCREMENTAL_PUSH_VERSION));
