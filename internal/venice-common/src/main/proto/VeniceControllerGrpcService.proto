@@ -64,9 +64,9 @@ message QueryJobStatusGrpcRequest {
   string clusterName = 1;
   string storeName = 2;
   int32 version = 3;
-  string jobName = 4;
+  optional string incrementalPushVersion = 4;
   string targetedRegions = 5;
-  optional string incrementalPushVersion = 6;
+  string region = 6;
 }
 
 message QueryJobStatusGrpcResponse {
