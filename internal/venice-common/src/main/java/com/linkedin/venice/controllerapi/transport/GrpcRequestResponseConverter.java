@@ -2,10 +2,14 @@ package com.linkedin.venice.controllerapi.transport;
 
 import com.google.rpc.ErrorInfo;
 import com.linkedin.venice.client.exceptions.VeniceClientException;
+import com.linkedin.venice.controller.server.endpoints.JobStatusRequest;
+import com.linkedin.venice.controllerapi.JobStatusQueryResponse;
 import com.linkedin.venice.controllerapi.NewStoreResponse;
 import com.linkedin.venice.controllerapi.request.NewStoreRequest;
 import com.linkedin.venice.protocols.CreateStoreGrpcRequest;
 import com.linkedin.venice.protocols.CreateStoreGrpcResponse;
+import com.linkedin.venice.protocols.QueryJobStatusGrpcRequest;
+import com.linkedin.venice.protocols.QueryJobStatusGrpcResponse;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.protobuf.StatusProto;
@@ -44,6 +48,26 @@ public class GrpcRequestResponseConverter {
         grpcRequest.getValueSchema(),
         accessPermissions,
         grpcRequest.getIsSystemStore());
+  }
+
+  public static JobStatusRequest convertGrpcRequestToJobStatusRequest(QueryJobStatusGrpcRequest grpcRequest) {
+    return new JobStatusRequest(
+        grpcRequest.getClusterName(),
+        grpcRequest.getStoreName(),
+        grpcRequest.getVersion(),
+        grpcRequest.getIncrementalPushVersion(),
+        grpcRequest.getTargetedRegions(),
+        grpcRequest.getRegion());
+  }
+
+  public static QueryJobStatusGrpcResponse convertQueryJobStatusResponseToGrpcResponse(
+      JobStatusQueryResponse jobStatusResponse) {
+    QueryJobStatusGrpcResponse.Builder responseBuilder = QueryJobStatusGrpcResponse.newBuilder();
+    responseBuilder.setVersion(jobStatusResponse.getVersion());// TODO: set response data
+    responseBuilder.setStatus(jobStatusResponse.getStatus());
+    responseBuilder.setStatusUpdateTimeStamp(jobStatusResponse.getStatusUpdateTimestamp());
+    responseBuilder.setStatusDetails(jobStatusResponse.getStatusDetails());
+    return responseBuilder.build();
   }
 
   /**
