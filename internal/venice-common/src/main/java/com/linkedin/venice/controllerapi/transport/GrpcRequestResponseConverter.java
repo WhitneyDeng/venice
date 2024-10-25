@@ -2,9 +2,9 @@ package com.linkedin.venice.controllerapi.transport;
 
 import com.google.rpc.ErrorInfo;
 import com.linkedin.venice.client.exceptions.VeniceClientException;
-import com.linkedin.venice.controller.server.endpoints.JobStatusRequest;
 import com.linkedin.venice.controllerapi.JobStatusQueryResponse;
 import com.linkedin.venice.controllerapi.NewStoreResponse;
+import com.linkedin.venice.controllerapi.request.JobStatusRequest;
 import com.linkedin.venice.controllerapi.request.NewStoreRequest;
 import com.linkedin.venice.protocols.CreateStoreGrpcRequest;
 import com.linkedin.venice.protocols.CreateStoreGrpcResponse;

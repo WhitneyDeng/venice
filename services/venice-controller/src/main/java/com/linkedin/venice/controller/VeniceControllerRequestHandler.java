@@ -1,8 +1,8 @@
 package com.linkedin.venice.controller;
 
-import com.linkedin.venice.controller.server.endpoints.JobStatusRequest;
 import com.linkedin.venice.controllerapi.JobStatusQueryResponse;
 import com.linkedin.venice.controllerapi.LeaderControllerResponse;
+import com.linkedin.venice.controllerapi.request.JobStatusRequest;
 import com.linkedin.venice.controllerapi.request.NewStoreRequest;
 import com.linkedin.venice.meta.Instance;
 import com.linkedin.venice.meta.Version;

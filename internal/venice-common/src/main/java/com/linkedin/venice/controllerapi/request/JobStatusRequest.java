@@ -1,8 +1,7 @@
-package com.linkedin.venice.controller.server.endpoints;
+package com.linkedin.venice.controllerapi.request;
 
 import static com.linkedin.venice.controllerapi.ControllerApiConstants.*;
 
-import com.linkedin.venice.controllerapi.request.ControllerRequest;
 import com.linkedin.venice.utils.Utils;
 
 
