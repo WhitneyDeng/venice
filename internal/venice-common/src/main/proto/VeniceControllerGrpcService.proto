@@ -74,7 +74,9 @@ message QueryJobStatusGrpcResponse {
   string status = 2;
   string statusDetails = 3;
   int64 statusUpdateTimeStamp = 4;
-  repeated UnCompletedPartition uncompletedPartitions = 5;
+  map<string, string> extraInfo = 5;
+  map<string, string> extraDetails = 6;
+  map<string, int64> extraInfoUpdateTimestamp = 7;
 }
 
 // intentionally ignore extra information related fields and details
