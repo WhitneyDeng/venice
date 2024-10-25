@@ -20,6 +20,7 @@ import com.linkedin.venice.controllerapi.ControllerResponse;
 import com.linkedin.venice.controllerapi.IncrementalPushVersionsResponse;
 import com.linkedin.venice.controllerapi.JobStatusQueryResponse;
 import com.linkedin.venice.controllerapi.request.JobStatusRequest;
+import com.linkedin.venice.controllerapi.request.KillOfflinePushJobRequest;
 import com.linkedin.venice.controllerapi.routes.PushJobStatusUploadResponse;
 import com.linkedin.venice.exceptions.ErrorType;
 import com.linkedin.venice.meta.Version;
@@ -94,12 +95,15 @@ public class JobRoutes extends AbstractRoute {
           return AdminSparkServer.OBJECT_MAPPER.writeValueAsString(responseObject);
         }
         AdminSparkServer.validateParams(request, KILL_OFFLINE_PUSH_JOB.getParams(), admin);
+
         String cluster = request.queryParams(CLUSTER);
         String topic = request.queryParams(TOPIC);
-        responseObject.setCluster(cluster);
-        responseObject.setName(Version.parseStoreFromKafkaTopicName(topic));
 
-        admin.killOfflinePush(cluster, topic, false);
+        KillOfflinePushJobRequest killOfflinePushJobRequest = new KillOfflinePushJobRequest();
+        killOfflinePushJobRequest.setClusterName(cluster);
+        killOfflinePushJobRequest.setTopicName(topic);
+
+        requestHandler.killOfflinePushJob(killOfflinePushJobRequest, responseObject);
       } catch (Throwable e) {
         responseObject.setError(e);
         AdminSparkServer.handleError(e, request, response);

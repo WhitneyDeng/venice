@@ -79,6 +79,16 @@ message QueryJobStatusGrpcResponse {
   map<string, int64> extraInfoUpdateTimestamp = 7;
 }
 
+message KillOfflinePushJobGrpcRequest {
+  string clusterName = 1;
+  string topicName = 2;
+}
+
+message KillOfflinePushJobGrpcResponse {
+  string clusterName = 1;
+  string topicName = 2;
+}
+
 // intentionally ignore extra information related fields and details
 message UnCompletedPartition {
   int32 partition = 1;
