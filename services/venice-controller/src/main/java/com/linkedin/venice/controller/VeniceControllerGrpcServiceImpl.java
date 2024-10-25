@@ -97,7 +97,6 @@ public class VeniceControllerGrpcServiceImpl extends VeniceControllerGrpcService
       JobStatusQueryResponse jobStatusResponse = new JobStatusQueryResponse();
 
       requestHandler.queryJobStatus(jobStatusRequest, jobStatusResponse);
-
       LOGGER.info("Queried job status for {}", jobDescription);
 
       responseObserver
