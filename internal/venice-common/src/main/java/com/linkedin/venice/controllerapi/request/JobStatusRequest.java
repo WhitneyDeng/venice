@@ -6,7 +6,6 @@ import com.linkedin.venice.utils.Utils;
 
 
 public class JobStatusRequest extends ControllerRequest {
-  // TODO: extend ControllerRequest (refer to NewStoreRequest)
   private String storeName;
   private int versionNumber;
   private String incrementalPushVersion;
