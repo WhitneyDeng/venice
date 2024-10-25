@@ -3,13 +3,17 @@ package com.linkedin.venice.controller;
 import com.google.protobuf.Any;
 import com.google.rpc.Code;
 import com.google.rpc.ErrorInfo;
+import com.linkedin.venice.controllerapi.JobStatusQueryResponse;
 import com.linkedin.venice.controllerapi.LeaderControllerResponse;
+import com.linkedin.venice.controllerapi.request.JobStatusRequest;
 import com.linkedin.venice.controllerapi.request.NewStoreRequest;
 import com.linkedin.venice.controllerapi.transport.GrpcRequestResponseConverter;
 import com.linkedin.venice.protocols.CreateStoreGrpcRequest;
 import com.linkedin.venice.protocols.CreateStoreGrpcResponse;
 import com.linkedin.venice.protocols.LeaderControllerGrpcRequest;
 import com.linkedin.venice.protocols.LeaderControllerGrpcResponse;
+import com.linkedin.venice.protocols.QueryJobStatusGrpcRequest;
+import com.linkedin.venice.protocols.QueryJobStatusGrpcResponse;
 import com.linkedin.venice.protocols.VeniceControllerGrpcServiceGrpc.VeniceControllerGrpcServiceImplBase;
 import io.grpc.protobuf.StatusProto;
 import io.grpc.stub.StreamObserver;
@@ -59,6 +63,63 @@ public class VeniceControllerGrpcServiceImpl extends VeniceControllerGrpcService
       com.google.rpc.Status status = com.google.rpc.Status.newBuilder()
           .setCode(Code.INTERNAL.getNumber())
           .setMessage("Failed to create store: " + storeName + " in cluster: " + clusterName)
+          .addDetails(Any.pack(errorInfo))
+          .build();
+
+      // Return the error response with structured details
+      responseObserver.onError(StatusProto.toStatusRuntimeException(status));
+    }
+  }
+
+  @Override
+  public void queryJobStatus(
+      QueryJobStatusGrpcRequest request,
+      StreamObserver<QueryJobStatusGrpcResponse> responseObserver) {
+    String clusterName = request.getClusterName();
+    String storeName = request.getStoreName();
+    int versionNumber = request.getVersion();
+    String incrementalPushVersion = request.getIncrementalPushVersion();
+    String targetedRegions = request.getTargetedRegions();
+    String region = request.getRegion();
+    String jobDescription = String.format(
+        "job in store: {} version: {} incremental push version: {} in cluster: {} in region {} and targeted region {}",
+        storeName,
+        versionNumber,
+        incrementalPushVersion,
+        clusterName,
+        region,
+        targetedRegions); // TODO: prune log params: which of these params are significant?
+
+    LOGGER.info("Received gRPC request to query job status for {}", jobDescription);
+    try {
+      // Assuming there's a method in requestHandler to handle job status queries
+      JobStatusRequest jobStatusRequest = GrpcRequestResponseConverter.convertGrpcRequestToJobStatusRequest(request);
+      JobStatusQueryResponse jobStatusResponse = new JobStatusQueryResponse();
+
+      requestHandler.queryJobStatus(jobStatusRequest, jobStatusResponse);
+
+      LOGGER.info("Queried job status for {}", jobDescription);
+
+      responseObserver
+          .onNext(GrpcRequestResponseConverter.convertQueryJobStatusResponseToGrpcResponse(jobStatusResponse));
+      responseObserver.onCompleted();
+    } catch (Exception e) {
+      LOGGER.error("Error while querying job status for {}", jobDescription);
+
+      // TODO: prune log params
+      ErrorInfo errorInfo = ErrorInfo.newBuilder()
+          .setReason("JOB_STATUS_QUERY_FAILED")
+          .putMetadata("storeName", storeName)
+          .putMetadata("clusterName", clusterName)
+          .putMetadata("versionNumber", String.valueOf(versionNumber))
+          .putMetadata("incrementalPushVersion", incrementalPushVersion)
+          .putMetadata("targetedRegions", targetedRegions)
+          .putMetadata("region", region)
+          .putMetadata("errorMessage", e.getMessage())
+          .build();
+      com.google.rpc.Status status = com.google.rpc.Status.newBuilder()
+          .setCode(Code.INTERNAL.getNumber())
+          .setMessage("Failed to query job status for" + jobDescription)
           .addDetails(Any.pack(errorInfo))
           .build();
 

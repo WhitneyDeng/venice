@@ -60,13 +60,17 @@ public class GrpcRequestResponseConverter {
         grpcRequest.getRegion());
   }
 
+  // TODO: overload toGrpcRequest() or create new method signature (as currently implemented below)?
   public static QueryJobStatusGrpcResponse convertQueryJobStatusResponseToGrpcResponse(
       JobStatusQueryResponse jobStatusResponse) {
     QueryJobStatusGrpcResponse.Builder responseBuilder = QueryJobStatusGrpcResponse.newBuilder();
     responseBuilder.setVersion(jobStatusResponse.getVersion());// TODO: set response data
     responseBuilder.setStatus(jobStatusResponse.getStatus());
-    responseBuilder.setStatusUpdateTimeStamp(jobStatusResponse.getStatusUpdateTimestamp());
     responseBuilder.setStatusDetails(jobStatusResponse.getStatusDetails());
+    responseBuilder.setStatusUpdateTimeStamp(jobStatusResponse.getStatusUpdateTimestamp());
+    responseBuilder.putAllExtraInfo(jobStatusResponse.getExtraInfo());
+    responseBuilder.putAllExtraDetails(jobStatusResponse.getExtraDetails());
+    responseBuilder.putAllExtraInfoUpdateTimestamp(jobStatusResponse.getExtraInfoUpdateTimestamp());
     return responseBuilder.build();
   }
 
