@@ -1,10 +1,8 @@
 package com.linkedin.venice.controller;
 
-import com.linkedin.venice.controllerapi.ControllerResponse;
 import com.linkedin.venice.controllerapi.JobStatusQueryResponse;
 import com.linkedin.venice.controllerapi.LeaderControllerResponse;
 import com.linkedin.venice.controllerapi.request.JobStatusRequest;
-import com.linkedin.venice.controllerapi.request.KillOfflinePushJobRequest;
 import com.linkedin.venice.controllerapi.request.NewStoreRequest;
 import com.linkedin.venice.meta.Instance;
 import com.linkedin.venice.meta.Version;
@@ -53,7 +51,7 @@ public class VeniceControllerRequestHandler {
     LOGGER.info("Store: {} created successfully in cluster: {}", request.getStoreName(), request.getClusterName());
   }
 
-  public void queryJobStatus(JobStatusRequest jobStatusRequest, JobStatusQueryResponse response) {
+  public void queryJobStatus(JobStatusRequest jobStatusRequest, JobStatusQueryResponse responseObject) {
     String store = jobStatusRequest.getStoreName();
     int versionNumber = jobStatusRequest.getVersionNumber();
     String cluster = jobStatusRequest.getClusterName();
@@ -68,28 +66,17 @@ public class VeniceControllerRequestHandler {
         Optional.ofNullable(incrementalPushVersion),
         region,
         targetedRegions);
-    response.setVersion(versionNumber);
-    response.setStatus(offlineJobStatus.getExecutionStatus().toString());
-    response.setStatusDetails(offlineJobStatus.getStatusDetails());
-    response.setStatusUpdateTimestamp(offlineJobStatus.getStatusUpdateTimestamp());
-    response.setExtraInfo(offlineJobStatus.getExtraInfo());
-    response.setExtraDetails(offlineJobStatus.getExtraDetails());
-    response.setExtraInfoUpdateTimestamp(offlineJobStatus.getExtraInfoUpdateTimestamp());
+    responseObject.setStatus(offlineJobStatus.getExecutionStatus().toString());
+    responseObject.setStatusUpdateTimestamp(offlineJobStatus.getStatusUpdateTimestamp());
+    responseObject.setStatusDetails(offlineJobStatus.getStatusDetails());
+    responseObject.setExtraInfo(offlineJobStatus.getExtraInfo());
+    responseObject.setExtraInfoUpdateTimestamp(offlineJobStatus.getExtraInfoUpdateTimestamp());
+    responseObject.setExtraDetails(offlineJobStatus.getExtraDetails());
+    responseObject.setUncompletedPartitions(offlineJobStatus.getUncompletedPartitions());
 
-    response.setCluster(cluster);
-    response.setName(store);
-  }
-
-  public void killOfflinePushJob(KillOfflinePushJobRequest request, ControllerResponse response) {
-    String cluster = request.getClusterName();
-    String topic = request.getTopicName();
-
-    LOGGER.info("Killing Push Job: {} in cluster: {}", topic, cluster);
-    admin.killOfflinePush(cluster, topic, false);
-    LOGGER.info("Push Job: {} killed successfully in cluster: {}", topic, cluster);
-
-    response.setCluster(cluster);
-    response.setName(Version.parseStoreFromKafkaTopicName(topic));
+    responseObject.setCluster(cluster);
+    responseObject.setName(store);
+    responseObject.setVersion(versionNumber);
   }
 
   public void getLeaderController(String clusterName, LeaderControllerResponse response) {
